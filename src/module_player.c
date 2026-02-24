@@ -19,6 +19,7 @@
 #include "lyrics.h"
 #include "settings.h"
 #include "add_to_playlist.h"
+#include "display_helper.h"
 #include "ui_utils.h"
 #include "resume.h"
 #include "playlist_m3u.h"
@@ -510,11 +511,17 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen) {
     }
 
     while (1) {
+        GFX_startFrame();
         PAD_poll();
 
         // Handle add-to-playlist dialog overlay
         if (AddToPlaylist_isActive()) {
             if (AddToPlaylist_handleInput()) {
+                // TG5050: keyboard in add-to-playlist may have triggered display recovery
+				{
+					SDL_Surface* ns = DisplayHelper_getReinitScreen();
+					if (ns) screen = ns;
+				}
                 // Dialog closed — skip rest of input to avoid double-handling buttons
                 dirty = 1;
                 continue;
@@ -697,11 +704,17 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
     ModuleCommon_recordInputTime();
 
     while (1) {
+        GFX_startFrame();
         PAD_poll();
 
         // Handle add-to-playlist dialog overlay
         if (AddToPlaylist_isActive()) {
             if (AddToPlaylist_handleInput()) {
+                // TG5050: keyboard in add-to-playlist may have triggered display recovery
+				{
+					SDL_Surface* ns = DisplayHelper_getReinitScreen();
+					if (ns) screen = ns;
+				}
                 // Dialog closed — skip rest of input to avoid double-handling buttons
                 dirty = 1;
                 continue;
@@ -967,11 +980,17 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
         PlayerInternalState state = PLAYER_INTERNAL_PLAYING;
 
         while (1) {
+            GFX_startFrame();
             PAD_poll();
 
             // Handle add-to-playlist dialog overlay
             if (AddToPlaylist_isActive()) {
                 if (AddToPlaylist_handleInput()) {
+                    // TG5050: keyboard in add-to-playlist may have triggered display recovery
+					{
+						SDL_Surface* ns = DisplayHelper_getReinitScreen();
+						if (ns) screen = ns;
+					}
                     dirty = 1;
                     continue;
                 }

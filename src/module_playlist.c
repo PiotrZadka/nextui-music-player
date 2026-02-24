@@ -10,6 +10,7 @@
 #include "playlist_m3u.h"
 #include "playlist.h"
 #include "keyboard.h"
+#include "display_helper.h"
 #include "ui_playlist.h"
 #include "ui_main.h"
 #include "ui_utils.h"
@@ -71,6 +72,7 @@ ModuleExitReason PlaylistModule_run(SDL_Surface* screen) {
     int show_setting = 0;
 
     while (1) {
+        GFX_startFrame();
         PAD_poll();
 
         // Handle confirmation dialog
@@ -158,8 +160,14 @@ ModuleExitReason PlaylistModule_run(SDL_Surface* screen) {
             }
             else if (PAD_justPressed(BTN_Y)) {
                 // New Playlist
+                DisplayHelper_prepareForExternal();
                 char* name = Keyboard_open("Playlist name");
                 PAD_poll(); PAD_reset();
+                DisplayHelper_recoverDisplay();
+				{
+					SDL_Surface* ns = DisplayHelper_getReinitScreen();
+					if (ns) screen = ns;
+				}
                 if (name && name[0]) {
                     if (M3U_create(name) == 0) {
                         show_toast("Playlist created");

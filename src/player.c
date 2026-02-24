@@ -1514,6 +1514,7 @@ int Player_init(void) {
     }
 
     player.audio_initialized = true;
+    current_sample_rate = have.freq;
     {
         int bass_hz = Settings_getBassFilterHz();
         if (bass_hz > 0) speaker_hpf_init(current_sample_rate, (float)bass_hz);

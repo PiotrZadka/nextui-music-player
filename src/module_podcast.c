@@ -9,6 +9,7 @@
 #include "podcast.h"
 #include "player.h"
 #include "keyboard.h"
+#include "display_helper.h"
 #include "ui_podcast.h"
 #include "ui_radio.h"
 #include "ui_main.h"
@@ -126,6 +127,7 @@ ModuleExitReason PodcastModule_run(SDL_Surface* screen) {
     }
 
     while (1) {
+        GFX_startFrame();
         PAD_poll();
 
         // Handle confirmation dialog
@@ -369,8 +371,14 @@ ModuleExitReason PodcastModule_run(SDL_Surface* screen) {
                             dirty = 1;
                             break;
                         }
+                        DisplayHelper_prepareForExternal();
                         char* query = Keyboard_open("Search podcasts");
                         PAD_poll(); PAD_reset();
+                        DisplayHelper_recoverDisplay();
+					{
+						SDL_Surface* ns = DisplayHelper_getReinitScreen();
+						if (ns) screen = ns;
+					}
                         SDL_Delay(100);
                         PAD_poll(); PAD_reset();
                         if (query && query[0]) {

@@ -19,6 +19,7 @@ int MenuModule_run(SDL_Surface* screen) {
     int show_setting = 0;
 
     while (1) {
+        GFX_startFrame();
         PAD_poll();
 
         // Handle background player updates (track advancement, resume saving)

@@ -9,6 +9,7 @@
 #include "ui_fonts.h"
 #include "ui_utils.h"
 #include "module_common.h"
+#include "display_helper.h"
 
 // Internal state
 static bool active = false;
@@ -61,8 +62,10 @@ int AddToPlaylist_handleInput(void) {
     else if (PAD_justPressed(BTN_A)) {
         if (selected == 0) {
             // New Playlist
+            DisplayHelper_prepareForExternal();
             char* name = Keyboard_open("Playlist name");
             PAD_poll(); PAD_reset();
+            DisplayHelper_recoverDisplay();
             if (name && name[0]) {
                 if (M3U_create(name) == 0) {
                     char new_path[512];

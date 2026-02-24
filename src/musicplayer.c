@@ -32,6 +32,7 @@
 #include "settings.h"
 #include "resume.h"
 #include "background.h"
+#include "display_helper.h"
 
 // Global quit flag
 static bool quit = false;
@@ -91,6 +92,9 @@ int main(int argc, char* argv[]) {
     // Seed random number generator for shuffle
     srand((unsigned int)time(NULL));
 
+	// Mute hardware before opening audio device to prevent amplifier pop on TG5050
+	SetRawVolume(0);
+
     // Initialize player core
     if (Player_init() != 0) {
         LOG_error("Failed to initialize audio player\n");
@@ -105,6 +109,9 @@ int main(int argc, char* argv[]) {
     } else {
         Player_setVolume(1.0f);
     }
+
+	// Restore hardware volume after audio device is open and stable
+	SetVolume(GetVolume());
 
     // Initialize self-update module
     SelfUpdate_init(".");
@@ -174,6 +181,12 @@ int main(int argc, char* argv[]) {
                 reason = SettingsModule_run(screen);
                 break;
         }
+
+        // TG5050: modules may have triggered display recovery (new screen surface)
+		{
+			SDL_Surface* ns = DisplayHelper_getReinitScreen();
+			if (ns) screen = ns;
+		}
 
         if (reason == MODULE_EXIT_QUIT) {
             quit = true;
