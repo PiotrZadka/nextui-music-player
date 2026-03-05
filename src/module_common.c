@@ -356,20 +356,13 @@ bool ModuleCommon_handleHIDVolume(USBHIDEvent hid_event) {
 
 void ModuleCommon_handleHardwareVolume(void) {
     if (PAD_isPressed(BTN_MENU) || PAD_isPressed(BTN_SELECT)) return;
-    int vol_delta = 0;
-    if (PAD_justRepeated(BTN_PLUS)) vol_delta = 1;
-    else if (PAD_justRepeated(BTN_MINUS)) vol_delta = -1;
-    if (!vol_delta) return;
+    if (!PAD_justRepeated(BTN_PLUS) && !PAD_justRepeated(BTN_MINUS)) return;
 
-    int vol = GetVolume() + vol_delta;
-    if (vol > 20) vol = 20;
-    else if (vol < 0) vol = 0;
-
+    // Don't increment volume here - keymon already handles SetVolume().
+    // We only need to sync software volume for BT/USB DAC output.
     if (Player_isBluetoothActive() || Player_isUSBDACActive()) {
+        int vol = GetVolume();
         float v = vol / 20.0f;
         Player_setVolume(v * v * v);
-    } else {
-        SetVolume(vol);
-        Player_setVolume(1.0f);
     }
 }

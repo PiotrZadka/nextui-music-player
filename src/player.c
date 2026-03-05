@@ -114,15 +114,6 @@ static int m4a_read_callback(int64_t offset, void* buffer, size_t size, void* to
 #define AUDIO_CHANNELS 2
 #define AUDIO_SAMPLES 2048  // Smaller buffer for lower latency
 
-// Convert linear volume (0-1) to perceived volume using logarithmic curve
-// This makes volume steps feel more natural to human hearing
-static inline float apply_volume_curve(float linear_vol) {
-    if (linear_vol <= 0.0f) return 0.0f;
-    if (linear_vol >= 1.0f) return 1.0f;
-    // Use power curve with exponent 0.4 for natural perceived loudness
-    // At 50% input -> ~76% output, at 25% input -> ~57% output
-    return powf(linear_vol, 0.4f);
-}
 
 // Soft limiter for built-in speaker to prevent amplifier clipping
 // Linear below threshold, asymptotically compressed above
@@ -1291,11 +1282,10 @@ static void audio_callback(void* userdata, Uint8* stream, int len) {
                 memset(&out[samples_got], 0, (samples_needed * AUDIO_CHANNELS - samples_got) * sizeof(int16_t));
             }
 
-            // Apply volume with logarithmic curve for natural perceived loudness
+            // Apply software volume (already curved via cubic in volume setter)
             if (ctx->volume < 0.99f || ctx->volume > 1.01f) {
-                float curved_vol = apply_volume_curve(ctx->volume);
                 for (int i = 0; i < samples_needed * AUDIO_CHANNELS; i++) {
-                    out[i] = (int16_t)(out[i] * curved_vol);
+                    out[i] = (int16_t)(out[i] * ctx->volume);
                 }
             }
 
@@ -1345,11 +1335,10 @@ static void audio_callback(void* userdata, Uint8* stream, int len) {
                    (samples_needed - samples_read) * sizeof(int16_t) * AUDIO_CHANNELS);
         }
 
-        // Apply volume with logarithmic curve for natural perceived loudness
+        // Apply software volume (already curved via cubic in volume setter)
         if (ctx->volume < 0.99f || ctx->volume > 1.01f) {
-            float curved_vol = apply_volume_curve(ctx->volume);
             for (size_t i = 0; i < samples_read * AUDIO_CHANNELS; i++) {
-                out[i] = (int16_t)(out[i] * curved_vol);
+                out[i] = (int16_t)(out[i] * ctx->volume);
             }
         }
 
