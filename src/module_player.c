@@ -334,11 +334,12 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
     if (ModuleCommon_isScreenOffHintActive()) {
         if (ModuleCommon_processScreenOffHintTimeout()) {
             screen_off = true;
+            ModuleCommon_setDisplayOff(true);
             GFX_clear(screen);
             GFX_flip(screen);
         }
         Player_update();
-        GFX_sync();
+        ModuleCommon_adaptiveSync();
         return true;
     }
 
@@ -347,6 +348,7 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
         // Wake screen with SELECT+A
         if (PAD_isPressed(BTN_SELECT) && PAD_isPressed(BTN_A)) {
             screen_off = false;
+            ModuleCommon_setDisplayOff(false);
             PLAT_enableBacklight(1);
             ModuleCommon_recordInputTime();
             *dirty = 1;
@@ -360,6 +362,7 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
             if (!handle_track_ended() && Player_getState() == PLAYER_STATE_STOPPED) {
                 Resume_clear();  // All tracks finished naturally
                 screen_off = false;
+                ModuleCommon_setDisplayOff(false);
                 PLAT_enableBacklight(1);
                 cleanup_playback(false);
                 load_directory(MUSIC_PATH);
@@ -367,7 +370,7 @@ static bool handle_playing_input(SDL_Surface *screen, PlayerInternalState *state
                 *dirty = 1;
             }
         }
-        GFX_sync();
+        ModuleCommon_adaptiveSync();
         return true;
     }
 
@@ -511,7 +514,7 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen) {
     }
 
     while (1) {
-        GFX_startFrame();
+        ModuleCommon_startFrame();
         PAD_poll();
 
         // Handle add-to-playlist dialog overlay
@@ -529,7 +532,7 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen) {
             // Still active, render dialog (covers entire screen)
             AddToPlaylist_render(screen);
             GFX_flip(screen);
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -552,7 +555,7 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen) {
             }
             // Render delete dialog
             render_delete_dialog(screen);
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -567,7 +570,7 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen) {
             }
             if (global.input_consumed) {
                 if (global.dirty) dirty = 1;
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             }
         }
@@ -620,7 +623,7 @@ ModuleExitReason PlayerModule_run(SDL_Surface* screen) {
             GFX_flip(screen);
             dirty = 0;
         } else if (!screen_off) {
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
         }
     }
 }
@@ -704,7 +707,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
     ModuleCommon_recordInputTime();
 
     while (1) {
-        GFX_startFrame();
+        ModuleCommon_startFrame();
         PAD_poll();
 
         // Handle add-to-playlist dialog overlay
@@ -722,7 +725,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
             // Dialog covers entire screen, no need to render underlying content
             AddToPlaylist_render(screen);
             GFX_flip(screen);
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -737,7 +740,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
             }
             if (global.input_consumed) {
                 if (global.dirty) dirty = 1;
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             }
         }
@@ -746,11 +749,12 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         if (ModuleCommon_isScreenOffHintActive()) {
             if (ModuleCommon_processScreenOffHintTimeout()) {
                 screen_off = true;
+                ModuleCommon_setDisplayOff(true);
                 GFX_clear(screen);
                 GFX_flip(screen);
             }
             Player_update();
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -758,6 +762,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
         if (screen_off) {
             if (PAD_isPressed(BTN_SELECT) && PAD_isPressed(BTN_A)) {
                 screen_off = false;
+                ModuleCommon_setDisplayOff(false);
                 PLAT_enableBacklight(1);
                 ModuleCommon_recordInputTime();
                 dirty = 1;
@@ -770,6 +775,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
                 if (!handle_track_ended() && Player_getState() == PLAYER_STATE_STOPPED) {
                     Resume_clear();  // All tracks finished naturally
                     screen_off = false;
+                    ModuleCommon_setDisplayOff(false);
                     PLAT_enableBacklight(1);
                     Player_stop();
                     cleanup_album_art_background();
@@ -777,7 +783,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
                     return MODULE_EXIT_TO_MENU;
                 }
             }
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -926,7 +932,7 @@ ModuleExitReason PlayerModule_runWithPlaylist(SDL_Surface* screen,
             GFX_flip(screen);
             dirty = 0;
         } else if (!screen_off) {
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
         }
     }
 }
@@ -980,7 +986,7 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
         PlayerInternalState state = PLAYER_INTERNAL_PLAYING;
 
         while (1) {
-            GFX_startFrame();
+            ModuleCommon_startFrame();
             PAD_poll();
 
             // Handle add-to-playlist dialog overlay
@@ -996,7 +1002,7 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
                 }
                 AddToPlaylist_render(screen);
                 GFX_flip(screen);
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             }
 
@@ -1011,7 +1017,7 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
                 }
                 if (global.input_consumed) {
                     if (global.dirty) dirty = 1;
-                    GFX_sync();
+                    ModuleCommon_adaptiveSync();
                     continue;
                 }
             }
@@ -1065,7 +1071,7 @@ ModuleExitReason PlayerModule_runResume(SDL_Surface* screen, const ResumeState* 
                 GFX_flip(screen);
                 dirty = 0;
             } else if (!screen_off) {
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
             }
         }
 

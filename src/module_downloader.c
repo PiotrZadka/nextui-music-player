@@ -71,7 +71,7 @@ ModuleExitReason DownloaderModule_run(SDL_Surface* screen) {
     }
 
     while (1) {
-        GFX_startFrame();
+        ModuleCommon_startFrame();
         PAD_poll();
 
         // Handle global input
@@ -90,7 +90,7 @@ ModuleExitReason DownloaderModule_run(SDL_Surface* screen) {
         }
         if (global.input_consumed) {
             if (global.dirty) dirty = 1;
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -300,7 +300,7 @@ ModuleExitReason DownloaderModule_run(SDL_Surface* screen) {
             // Toast refresh
             ModuleCommon_tickToast(toast_message, toast_time, &dirty);
         } else {
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
         }
     }
 }

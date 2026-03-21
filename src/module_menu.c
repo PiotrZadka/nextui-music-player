@@ -19,7 +19,7 @@ int MenuModule_run(SDL_Surface* screen) {
     int show_setting = 0;
 
     while (1) {
-        GFX_startFrame();
+        ModuleCommon_startFrame();
         PAD_poll();
 
         // Handle background player updates (track advancement, resume saving)
@@ -45,7 +45,7 @@ int MenuModule_run(SDL_Surface* screen) {
         }
         if (global.input_consumed) {
             if (global.dirty) dirty = 1;
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -110,7 +110,7 @@ int MenuModule_run(SDL_Surface* screen) {
         } else {
             // Software scroll needs continuous redraws
             if (menu_needs_scroll_redraw()) dirty = 1;
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
         }
     }
 }

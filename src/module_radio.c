@@ -136,7 +136,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
     }
 
     while (1) {
-        GFX_startFrame();
+        ModuleCommon_startFrame();
         PAD_poll();
 
         // Handle confirmation dialog
@@ -160,18 +160,18 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
                 }
                 show_confirm = false;
                 dirty = 1;
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             } else if (PAD_justPressed(BTN_B)) {
                 show_confirm = false;
                 dirty = 1;
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             }
             // Render confirmation dialog (covers entire screen)
             render_confirmation_dialog(screen, confirm_station_name, "Remove Station?");
             GFX_flip(screen);
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
             continue;
         }
 
@@ -195,7 +195,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
             }
             if (global.input_consumed) {
                 if (global.dirty) dirty = 1;
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             }
         }
@@ -263,11 +263,12 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
             if (ModuleCommon_isScreenOffHintActive()) {
                 if (ModuleCommon_processScreenOffHintTimeout()) {
                     screen_off = true;
+                    ModuleCommon_setDisplayOff(true);
                     GFX_clear(screen);
                     GFX_flip(screen);
                 }
                 Radio_update();
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             }
 
@@ -276,6 +277,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
                 // Wake screen with SELECT+A
                 if (PAD_isPressed(BTN_SELECT) && PAD_isPressed(BTN_A)) {
                     screen_off = false;
+                    ModuleCommon_setDisplayOff(false);
                     PLAT_enableBacklight(1);
                     ModuleCommon_recordInputTime();
                     dirty = 1;
@@ -284,7 +286,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
                 handle_hid_events();
                 ModuleCommon_handleHardwareVolume();
                 Radio_update();
-                GFX_sync();
+                ModuleCommon_adaptiveSync();
                 continue;
             }
 
@@ -539,7 +541,7 @@ ModuleExitReason RadioModule_run(SDL_Surface* screen) {
                 ModuleCommon_tickToast(radio_toast_message, radio_toast_time, &dirty);
             }
         } else if (!screen_off) {
-            GFX_sync();
+            ModuleCommon_adaptiveSync();
         }
     }
 }
