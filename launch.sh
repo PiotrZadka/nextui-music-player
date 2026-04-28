@@ -7,24 +7,23 @@ cd "$DIR"
 
 export LD_LIBRARY_PATH="$DIR:$DIR/bin:$DIR/bin/$PLATFORM:$LD_LIBRARY_PATH:/usr/bin"
 
-# Set CPU frequency for music player (power saving)
-echo ondemand > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-if [ "$PLATFORM" = "tg5050" ]; then
-	echo 672000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
-	echo 1680000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-else
-	echo 600000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
-	echo 1200000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-fi
+CPU_FREQ=/sys/devices/system/cpu/cpu0/cpufreq
+
+# Save current CPU scaling state and restore on exit (including crash)
+PREV_GOVERNOR=$(cat "$CPU_FREQ/scaling_governor")
+PREV_MIN_FREQ=$(cat "$CPU_FREQ/scaling_min_freq")
+PREV_MAX_FREQ=$(cat "$CPU_FREQ/scaling_max_freq")
+
+restore_cpu() {
+	echo "$PREV_GOVERNOR" > "$CPU_FREQ/scaling_governor"
+	echo "$PREV_MIN_FREQ" > "$CPU_FREQ/scaling_min_freq"
+	echo "$PREV_MAX_FREQ" > "$CPU_FREQ/scaling_max_freq"
+}
+trap restore_cpu EXIT
+
+echo conservative > "$CPU_FREQ/scaling_governor"
+cat "$CPU_FREQ/cpuinfo_min_freq" > "$CPU_FREQ/scaling_min_freq"
+cat "$CPU_FREQ/cpuinfo_max_freq" > "$CPU_FREQ/scaling_max_freq"
 
 # Run the platform-specific binary
 "$DIR/bin/$PLATFORM/musicplayer.elf" &> "$LOGS_PATH/music-player.txt"
-
-# Restore default CPU settings on exit
-if [ "$PLATFORM" = "tg5050" ]; then
-	echo 672000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
-	echo 2160000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-else
-	echo 600000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
-	echo 2000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-fi
