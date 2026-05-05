@@ -656,18 +656,19 @@ static void* download_thread_func(void* arg) {
         if (access(output_file, F_OK) == 0) {
             success = true;
         } else {
-            // Build download command - download M4A directly with metadata
-            // Metadata is embedded by yt-dlp (uses mutagen, no ffmpeg needed)
-            // Album art will be fetched by player during playback
-            // Force M4A only - no fallback to other formats
-            // socket-timeout prevents network hangs
+            // Download format 18 — standard (non-fragmented) MP4 with AAC audio.
+            // All YouTube AAC-only formats (140, 141) are fragmented DASH MP4
+            // which minimp4 can't parse. Format 18 has video+audio in standard
+            // MP4 container — minimp4 extracts the AAC audio track from it.
+            // --embed-metadata writes artist/title tags using mutagen (Python lib
+            // bundled with yt-dlp, works without ffmpeg on standard MP4 like f18).
             char cmd[2048];
             snprintf(cmd, sizeof(cmd),
                 "%s "
-                "-f \"bestaudio[ext=m4a]\" "
+                "-f 18 "
                 "--embed-metadata "
-                "--socket-timeout 30 "
                 "--parse-metadata \"title:%%(artist)s - %%(title)s\" "
+                "--socket-timeout 30 "
                 "--newline --progress "
                 "-o \"%s\" "
                 "--no-playlist "
@@ -678,7 +679,6 @@ static void* download_thread_func(void* arg) {
 
             // Use popen to read progress in real-time
             FILE* pipe = popen(cmd, "r");
-            int result = -1;
 
             if (pipe) {
                 char line[512];
@@ -719,8 +719,7 @@ static void* download_thread_func(void* arg) {
 
                                 pthread_mutex_lock(&queue_mutex);
                                 if (download_index < queue_count) {
-                                    // Download is ~80% of total, post-processing is ~20%
-                                    download_queue[download_index].progress_percent = (int)(percent * 0.8f);
+                                    download_queue[download_index].progress_percent = (int)percent;
                                     download_queue[download_index].speed_bps = speed;
                                     download_queue[download_index].eta_sec = eta;
                                     download_status.speed_bps = speed;
@@ -730,32 +729,11 @@ static void* download_thread_func(void* arg) {
                             }
                         }
                     }
-                    // Check for post-processing progress (metadata/thumbnail embedding)
-                    if (strstr(line, "[EmbedThumbnail]") || strstr(line, "Post-process")) {
-                        pthread_mutex_lock(&queue_mutex);
-                        if (download_index < queue_count) {
-                            download_queue[download_index].progress_percent = 85;
-                            download_queue[download_index].speed_bps = 0;
-                            download_queue[download_index].eta_sec = 0;
-                            download_status.speed_bps = 0;
-                            download_status.eta_sec = 0;
-                        }
-                        pthread_mutex_unlock(&queue_mutex);
-                    }
-                    if (strstr(line, "[Metadata]") || strstr(line, "Adding metadata")) {
-                        pthread_mutex_lock(&queue_mutex);
-                        if (download_index < queue_count) {
-                            download_queue[download_index].progress_percent = 95;
-                            download_queue[download_index].speed_bps = 0;
-                            download_queue[download_index].eta_sec = 0;
-                        }
-                        pthread_mutex_unlock(&queue_mutex);
-                    }
                 }
-                result = pclose(pipe);
+                (void)pclose(pipe);
             }
 
-            if (result == 0 && access(temp_file, F_OK) == 0) {
+            if (access(temp_file, F_OK) == 0) {
                 // Validate M4A file before moving
                 bool valid_m4a = false;
                 struct stat st;

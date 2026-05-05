@@ -53,8 +53,8 @@ extern "C" {
 #define MP4D_HEVC_SUPPORTED       1
 #define MP4D_TIMESTAMPS_SUPPORTED 1
 
-// Enable TrackFragmentBaseMediaDecodeTimeBox support
-#define MP4D_TFDT_SUPPORT         0
+// Enable TrackFragmentBaseMediaDecodeTimeBox support (needed for YouTube DASH/fragmented MP4)
+#define MP4D_TFDT_SUPPORT         1
 
 /************************************************************************/
 /*          Some values of MP4(E/D)_track_t->object_type_indication     */
@@ -2636,7 +2636,7 @@ int MP4D_open(MP4D_demux_t *mp4, int (*read_callback)(int64_t offset, void *buff
             {OD_DSI,   BOX_OD},
             {BOX_trak, BOX_ATOM},
             {BOX_moov, BOX_ATOM},
-            //{BOX_moof, BOX_ATOM},
+            {BOX_moof, BOX_ATOM},
             {BOX_mdia, BOX_ATOM},
             {BOX_tref, BOX_ATOM},
             {BOX_minf, BOX_ATOM},

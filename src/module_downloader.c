@@ -296,8 +296,18 @@ ModuleExitReason DownloaderModule_run(SDL_Surface* screen) {
             if (downloader_queue_scroll_needs_render()) dirty = 1;
         }
         // Keep refreshing while download is active (for progress updates)
-        if (state == DOWNLOADER_INTERNAL_QUEUE && Downloader_isDownloading()) {
-            dirty = 1;
+        // Also trigger one final refresh when download completes so the
+        // queue clears and the UI updates (e.g. shows "Queue is empty")
+        {
+            static bool was_downloading = false;
+            bool is_downloading = (state == DOWNLOADER_INTERNAL_QUEUE && Downloader_isDownloading());
+            if (is_downloading) {
+                dirty = 1;
+                was_downloading = true;
+            } else if (was_downloading && state == DOWNLOADER_INTERNAL_QUEUE) {
+                dirty = 1;
+                was_downloading = false;
+            }
         }
         // Handle power management
         ModuleCommon_PWR_update(&dirty, &show_setting);
